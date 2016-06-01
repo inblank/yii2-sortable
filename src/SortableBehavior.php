@@ -8,6 +8,7 @@
  */
 namespace inblank\sortable;
 
+use Yii;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii\db\Expression;
@@ -59,8 +60,31 @@ class SortableBehavior extends Behavior
     }
 
     /** After update event */
-    public function afterUpdate(){
-        // TODO check that change conditions and recalculate old range, and move to top in new range
+    public function afterUpdate($event)
+    {
+        $oldCondition = [];
+        $currentCondition = [];
+        /** @var ActiveRecord $owner */
+        $owner = $this->owner;
+        foreach ((array)$this->conditionAttributes as $attribute) {
+            if (!$owner->hasAttribute($attribute)) {
+                continue;
+            }
+            $oldCondition[$attribute] = $currentCondition[$attribute] = $owner->getAttribute($attribute);
+            if (array_key_exists($attribute, $event->changedAttributes)) {
+                $oldCondition[$attribute] = $event->changedAttributes[$attribute];
+            }
+        }
+        if (array_diff($currentCondition, $oldCondition) != []) {
+            // condition was changed
+            /** @var ActiveRecord $changedModel */
+            $changedModel = Yii::createObject($owner->className());
+            $changedModel->setAttributes($oldCondition, false);
+            // recalculate old model range
+            $changedModel->recalculateSort();
+            // move model to top in new model range
+            $owner->updateAttributes(['sort' => $owner->find()->andWhere($this->_buildCondition())->count() - 1]);
+        }
     }
 
     /** After delete event */
@@ -161,7 +185,9 @@ class SortableBehavior extends Behavior
             ) . ' ' . $builder->buildOrderBy($orderFields);
         $db->createCommand('set @sortingCount=-1;' . $query, $params)->execute();
         // update in current record
-        $owner->{$this->sortAttribute} = $owner->findOne($owner->getPrimaryKey())->{$this->sortAttribute};
+        if (!$owner->getIsNewRecord()) {
+            $owner->{$this->sortAttribute} = $owner->findOne($owner->getPrimaryKey())->{$this->sortAttribute};
+        }
     }
 
     /**

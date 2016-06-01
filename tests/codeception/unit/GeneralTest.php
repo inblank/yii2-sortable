@@ -21,7 +21,12 @@ class GeneralTest extends TestCase
     public function checkSequence($model)
     {
         $sort = 0;
-        $conditionAttributes = (array)$model->getBehavior('sortable')->conditionAttributes;
+        $conditionAttributes = [];
+        foreach ((array)$model->getBehavior('sortable')->conditionAttributes as $attribute) {
+            if ($model->hasAttribute($attribute)) {
+                $conditionAttributes[] = $attribute;
+            }
+        }
         $order = implode(' asc, ', $conditionAttributes);
         if (!empty($order)) {
             $order .= ' asc, ';
@@ -298,6 +303,57 @@ class GeneralTest extends TestCase
 
             expect('model3 must be deleted', $model3->delete())->equals(1);
             expect("the model3 sort sequence should be not broken", $this->checkSequence($model3))->true();
+        });
+
+        $model2 = Model2::findOne(14);
+        // set undefined model attribute in condition
+        $model2->getBehavior('sortable')->conditionAttributes = ['condition', 'foobar'];
+        $this->specify("we change sort with error attribute name in condition", function () use ($model2) {
+            $model2->moveToBottom();
+            expect('model2 should be chnage sort', $model2->sort)->equals(0);
+            expect("the model2 sort sequence should be not broken", $this->checkSequence($model2))->true();
+        });
+    }
+
+    public function testAfterUpdate()
+    {
+        $this->specify("we change models", function () {
+            $model = Model::findOne(3);
+            $oldSort = $model->sort;
+            $model->name = "Changed name";
+            expect("model must be save", $model->save())->true();
+            expect("model sort should be not changed", $model->sort)->equals($oldSort);
+
+            $model2 = Model2::findOne(3);
+            $model2->name = "Changed name";
+            $model2->condition = 2;
+            expect("model2 must be save", $model2->save())->true();
+            expect("model2 sort should be changed", $model2->sort)->equals(9);
+            expect("model2 sort sequence should be not broken", $this->checkSequence($model2))->true();
+
+            $model2 = Model2::findOne(11);
+            // set undefined model attribute in condition
+            $model2->getBehavior('sortable')->conditionAttributes = ['condition', 'foobar'];
+            $model2->name = "Changed name2";
+            $model2->condition = 1;
+            expect("model2 must be save", $model2->save())->true();
+            expect("model2 sort should be changed", $model2->sort)->equals(4);
+            expect("model2 sort sequence should be not broken", $this->checkSequence($model2))->true();
+
+            $model3 = Model3::findOne(8);
+            $model3->name = "Changed name";
+            $model3->condition2 = 'c';
+            expect("model3 must be save", $model3->save())->true();
+            expect("model3 sort should be changed", $model3->sort)->equals(5);
+            expect("model3 sort sequence should be not broken", $this->checkSequence($model3))->true();
+
+            $model3 = Model3::findOne(6);
+            $model3->name = "Changed name2";
+            $model3->condition = 3;
+            $model3->condition2 = 'a';
+            expect("model3(2) must be save", $model3->save())->true();
+            expect("model3(2) sort should be changed", $model3->sort)->equals(1);
+            expect("model3(2) sort sequence should be not broken", $this->checkSequence($model3))->true();
         });
     }
 
