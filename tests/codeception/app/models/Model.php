@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use inblank\sortable\Sortable;
+use inblank\sortable\SortableBehavior;
 use yii\db\ActiveRecord;
 
 /**
@@ -25,7 +25,7 @@ class Model extends ActiveRecord
     function behaviors()
     {
         return [
-            'sortable' =>Sortable::className(),
+            'sortable' =>SortableBehavior::className(),
         ];
     }
 

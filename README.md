@@ -1,4 +1,4 @@
-# Yii2 inblank/sortable
+# Behavior for Yii2 to support sorting in ActiveRecord models
 
 [![Build Status](https://img.shields.io/travis/inblank/yii2-sortable/master.svg?style=flat-square)](https://travis-ci.org/inblank/yii2-sortable)
 [![Packagist Version](https://img.shields.io/packagist/v/inblank/yii2-sortable.svg?style=flat-square)](https://packagist.org/packages/inblank/yii2-sortable)

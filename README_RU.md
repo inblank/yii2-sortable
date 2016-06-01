@@ -1,4 +1,4 @@
-# Yii2 inblank/sortable
+# Yii2 поведение inblank/yii2-sortable для управления сортировкой ActiveRecord моделей
 
 [![Build Status](https://img.shields.io/travis/inblank/yii2-sortable/master.svg?style=flat-square)](https://travis-ci.org/inblank/yii2-sortable)
 [![Packagist Version](https://img.shields.io/packagist/v/inblank/yii2-sortable.svg?style=flat-square)](https://packagist.org/packages/inblank/yii2-sortable)
@@ -45,7 +45,7 @@ class Model extends \yii\db\ActiveRecord
     {
         return [
             'sortable'=>[
-                'class' => SeobilityBehavior::className(),
+                'class' => SortableBehavior::className(),
                 // 'sortAttribute' => 'sort',
                 // 'conditionAttributes'=>[]
             ]
@@ -62,7 +62,7 @@ public function behaviors()
 {
     return [
         'sortable'=>[
-            'class' => SeobilityBehavior::className(),
+            'class' => SortableBehavior::className(),
             'sortAttribute' => 'my_order',
         ]
     ];
@@ -77,7 +77,7 @@ public function behaviors()
 {
     return [
         'sortable'=>[
-            'class' => SeobilityBehavior::className(),
+            'class' => SortableBehavior::className(),
             'conditionAttributes' => ['condition', 'condition2'],
         ]
     ];
@@ -91,7 +91,7 @@ public function behaviors()
 {
     return [
         'sortable'=>[
-            'class' => SeobilityBehavior::className(),
+            'class' => SortableBehavior::className(),
             'conditionAttributes' => 'condition',
         ]
     ];

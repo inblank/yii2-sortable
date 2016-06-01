@@ -1,6 +1,6 @@
 <?php
 /**
- * Extension for Yii2 to support sorting in ActiveRecord models
+ * Behavior for Yii2 to support sorting in ActiveRecord models
  *
  * @link https://github.com/inblank/yii2-sortable
  * @copyright Copyright (c) 2016 Pavel Aleksandrov <inblank@yandex.ru>
@@ -14,11 +14,11 @@ use yii\db\Expression;
 use yii\db\QueryBuilder;
 
 /**
- * Extension for Yii2 to support sorting in ActiveRecord models
+ * Behavior for Yii2 to support sorting in ActiveRecord models
  *
  * @property ActiveRecord $owner
  */
-class Sortable extends Behavior
+class SortableBehavior extends Behavior
 {
     /**
      * Attribute to store the sort order of records

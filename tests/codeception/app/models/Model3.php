@@ -2,7 +2,7 @@
 
 namespace app\models;
 
-use inblank\sortable\Sortable;
+use inblank\sortable\SortableBehavior;
 use yii\db\ActiveRecord;
 
 /**
@@ -28,7 +28,7 @@ class Model3 extends ActiveRecord
     {
         return [
             'sortable' => [
-                'class' => Sortable::className(),
+                'class' => SortableBehavior::className(),
                 'conditionAttributes' => ['condition', 'condition2'],
             ],
         ];
