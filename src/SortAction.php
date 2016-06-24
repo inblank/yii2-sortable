@@ -48,12 +48,15 @@ class SortAction extends Action
      */
     public function run($id, $position)
     {
+        if (!Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+        }
         if (empty($this->modelClass) || !class_exists($this->modelClass)) {
             throw new InvalidParamException('Define model class name for action ' . $this->controller->id . '::' . $this->id);
         }
         /** @var ActiveRecord $class */
         $class = $this->modelClass;
-        /** @var SortableBehavior $model */
+        /** @var SortableBehavior|ActiveRecord $model */
         $model = $class::findOne($id);
         if (!$model) {
             throw new HttpException(404, 'Model `' . $this->modelClass . '` to change sort not found');
@@ -80,8 +83,12 @@ class SortAction extends Action
                 }
                 break;
         }
+        $sortField = $model->sortAttribute;
         return Yii::$app->response->format == Response::FORMAT_JSON ?
-            ['status' => 200] :
-            $this->controller->redirect($this->redirectUrl);
+            [
+                'status' => 200,
+                'id' => $model->id,
+                $sortField => $model->$sortField
+            ] : $this->controller->redirect($this->redirectUrl);
     }
 }
