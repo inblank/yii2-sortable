@@ -48,7 +48,7 @@ class SortAction extends Action
      */
     public function run($id, $position)
     {
-        if (!Yii::$app->request->isAjax) {
+        if (Yii::$app->request->isAjax) {
             Yii::$app->response->format = Response::FORMAT_JSON;
         }
         if (empty($this->modelClass) || !class_exists($this->modelClass)) {
