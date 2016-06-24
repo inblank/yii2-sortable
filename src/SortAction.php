@@ -73,7 +73,7 @@ class SortAction extends Action
             default:
                 if (strpos('ud-', $position[0]) !== false) {
                     // relative position
-                    $position = ($position[0] == 'd' ? '-' : '') . substr($position, 1);
+                    $position = ($position[0] == 'u' ? '' : '-') . substr($position, 1);
                     if (is_numeric($position)) {
                         $model->sortChange($position);
                     }
