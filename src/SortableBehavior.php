@@ -36,6 +36,17 @@ class SortableBehavior extends Behavior
     public $conditionAttributes = null;
 
     /**
+     * Maximal sort index
+     * @var int
+     */
+    protected $_max;
+    /**
+     * Rendered sorting position
+     * @var array
+     */
+    protected $_condition;
+
+    /**
      * @inheritdoc
      */
     public function events()
@@ -52,7 +63,7 @@ class SortableBehavior extends Behavior
     {
         if ($this->owner->getIsNewRecord()) {
             // added new record always on top
-            $this->owner->{$this->sortAttribute} = $this->owner->find()->andWhere($this->_buildCondition())->count();
+            $this->owner->{$this->sortAttribute} = $this->owner->find()->andWhere($this->getCondition())->count();
         } else {
             // prevent direct change of sort field
             $this->owner->{$this->sortAttribute} = $this->owner->getOldAttribute($this->sortAttribute);
@@ -83,7 +94,7 @@ class SortableBehavior extends Behavior
             // recalculate old model range
             $changedModel->recalculateSort();
             // move model to top in new model range
-            $owner->updateAttributes(['sort' => $owner->find()->andWhere($this->_buildCondition())->count() - 1]);
+            $owner->updateAttributes(['sort' => $owner->find()->andWhere($this->getCondition())->count() - 1]);
         }
     }
 
@@ -91,7 +102,7 @@ class SortableBehavior extends Behavior
     public function afterDelete()
     {
         $owner = $this->owner;
-        $condition = $this->_buildCondition();
+        $condition = $this->getCondition();
         $condition[] = ['>', 'sort', $owner->{$this->sortAttribute}];
         $owner->updateAllCounters([$this->sortAttribute => -1], $condition);
     }
@@ -131,11 +142,11 @@ class SortableBehavior extends Behavior
             return;
         }
         $owner = $this->owner;
-        $condition = $this->_buildCondition();
+        $condition = $this->getCondition();
         $newSort = $owner->{$this->sortAttribute} + $value;
         if ($value > 0) {
             // move up
-            $max = $this->owner->find()->andWhere($condition)->count() - 1;
+            $max = $this->getMaxSort();
             if ($owner->{$this->sortAttribute} === $max) {
                 return;
             }
@@ -180,7 +191,7 @@ class SortableBehavior extends Behavior
         $query = $builder->update(
                 $owner->tableName(),
                 [$this->sortAttribute => new Expression('(@sortingCount:=(@sortingCount+1))')],
-                $this->_buildCondition(),
+                $this->getCondition(),
                 $params
             ) . ' ' . $builder->buildOrderBy($orderFields);
         $db->createCommand('set @sortingCount=-1;' . $query, $params)->execute();
@@ -191,18 +202,31 @@ class SortableBehavior extends Behavior
     }
 
     /**
-     * Build WHERE condition for sort change query
+     * Get maximal sort index
+     */
+    public function getMaxSort()
+    {
+        if ($this->_max === null) {
+            $this->_max = $this->owner->find()->andWhere($this->getCondition())->count() - 1;
+        }
+        return $this->_max;
+    }
+
+    /**
+     * Get WHERE condition for sort change query
      * @return array
      */
-    protected function _buildCondition()
+    protected function getCondition()
     {
-        $condition = ['and'];
-        foreach ((array)$this->conditionAttributes as $attribute) {
-            if ($this->owner->hasAttribute($attribute)) {
-                $condition[] = [$attribute => $this->owner->$attribute];
+        if ($this->_condition === null) {
+            $this->_condition = ['and'];
+            foreach ((array)$this->conditionAttributes as $attribute) {
+                if ($this->owner->hasAttribute($attribute)) {
+                    $this->_condition[] = [$attribute => $this->owner->$attribute];
+                }
             }
         }
-        return $condition;
+        return $this->_condition;
     }
 
 }
