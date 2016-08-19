@@ -28,7 +28,8 @@ class SortAction extends Action
 
     /**
      * Redirect URL if request not by ajax
-     * @var array
+     * Callable function signature: function($model){}, where $model is the current sorted model
+     * @var array|callable
      */
     public $redirectUrl = ['index'];
 
@@ -89,6 +90,9 @@ class SortAction extends Action
                 'status' => 200,
                 'id' => $model->id,
                 $sortField => $model->$sortField
-            ] : $this->controller->redirect($this->redirectUrl);
+            ] : $this->controller->redirect(
+                is_callable($this->redirectUrl)
+                    ? call_user_func($this->redirectUrl, $model) : $this->redirectUrl
+            );
     }
 }
