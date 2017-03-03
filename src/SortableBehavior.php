@@ -94,7 +94,9 @@ class SortableBehavior extends Behavior
             // recalculate old model range
             $changedModel->recalculateSort();
             // move model to top in new model range
-            $owner->updateAttributes(['sort' => $owner->find()->andWhere($this->getCondition())->count() - 1]);
+            $owner->updateAttributes([
+                $this->sortAttribute => $owner->find()->andWhere($this->getCondition())->count() - 1
+            ]);
         }
     }
 
@@ -103,7 +105,7 @@ class SortableBehavior extends Behavior
     {
         $owner = $this->owner;
         $condition = $this->getCondition();
-        $condition[] = ['>', 'sort', $owner->{$this->sortAttribute}];
+        $condition[] = ['>', $this->sortAttribute, $owner->{$this->sortAttribute}];
         $owner->updateAllCounters([$this->sortAttribute => -1], $condition);
     }
 
@@ -153,8 +155,8 @@ class SortableBehavior extends Behavior
             if ($newSort >= $max) {
                 $newSort = $max;
             }
-            $condition[] = [">", 'sort', $owner->{$this->sortAttribute}];
-            $condition[] = ["<=", 'sort', $newSort];
+            $condition[] = [">", $this->sortAttribute, $owner->{$this->sortAttribute}];
+            $condition[] = ["<=", $this->sortAttribute, $newSort];
             $counterChanger = -1;
         } else {
             // move down
@@ -164,12 +166,12 @@ class SortableBehavior extends Behavior
             if ($newSort < 0) {
                 $newSort = 0;
             }
-            $condition[] = ['<', 'sort', $owner->{$this->sortAttribute}];
-            $condition[] = ['>=', 'sort', $newSort];
+            $condition[] = ['<', $this->sortAttribute, $owner->{$this->sortAttribute}];
+            $condition[] = ['>=', $this->sortAttribute, $newSort];
             $counterChanger = 1;
         }
         $owner->updateAllCounters([$this->sortAttribute => $counterChanger], $condition);
-        $owner->updateAttributes(['sort' => $newSort]);
+        $owner->updateAttributes([$this->sortAttribute => $newSort]);
     }
 
     /**
@@ -181,19 +183,19 @@ class SortableBehavior extends Behavior
         $db = $this->owner->getDb();
         $builder = new QueryBuilder($db);
 
-        $orderFields = ['sort' => 'asc'];
+        $orderFields = [$this->sortAttribute => 'asc'];
         foreach ($owner->primaryKey() as $field) {
-            if ($field != 'sort') {
+            if ($field != $this->sortAttribute) {
                 $orderFields[$field] = 'asc';
             }
         }
         // recalculate sort
         $query = $builder->update(
-                $owner->tableName(),
-                [$this->sortAttribute => new Expression('(@sortingCount:=(@sortingCount+1))')],
-                $this->getCondition(),
-                $params
-            ) . ' ' . $builder->buildOrderBy($orderFields);
+            $owner->tableName(),
+            [$this->sortAttribute => new Expression('(@sortingCount:=(@sortingCount+1))')],
+            $this->getCondition(),
+            $params
+        ) . ' ' . $builder->buildOrderBy($orderFields);
         $db->createCommand('set @sortingCount=-1;' . $query, $params)->execute();
         // update in current record
         if (!$owner->getIsNewRecord()) {
@@ -228,5 +230,4 @@ class SortableBehavior extends Behavior
         }
         return $this->_condition;
     }
-
 }
