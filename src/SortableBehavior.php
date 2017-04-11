@@ -220,14 +220,71 @@ class SortableBehavior extends Behavior
      */
     protected function getCondition()
     {
-        if ($this->_condition === null) {
-            $this->_condition = ['and'];
-            foreach ((array)$this->conditionAttributes as $attribute) {
-                if ($this->owner->hasAttribute($attribute)) {
-                    $this->_condition[] = [$attribute => $this->owner->$attribute];
-                }
+        $condition = ['and'];
+        foreach ((array)$this->conditionAttributes as $attribute) {
+            if ($this->owner->hasAttribute($attribute)) {
+                $condition[] = [$attribute => $this->owner->$attribute];
             }
         }
-        return $this->_condition;
+        return $condition;
+    }
+
+    /**
+     * Move model relative other
+     * @param ActiveRecord $model model to move
+     * @param string $position moving position: after or before
+     */
+    public function relativeMove($model, $position)
+    {
+        $conditionAttributes = (array)$this->conditionAttributes;
+        $owner = $this->owner;
+
+        if (!empty($conditionAttributes)) {
+            $sameCondition = true;
+            foreach ($conditionAttributes as $attr) {
+                if ($owner->getAttribute($attr) != $model->getAttribute($attr)) {
+                    $sameCondition = false;
+                    break;
+                }
+            }
+            if (!$sameCondition) {
+                // move in other condition category
+                $this->moveToTop();
+                // update condition attribute
+                $condition = [];
+                foreach ($conditionAttributes as $attr) {
+                    $condition[$attr] = $model->getAttribute($attr);
+                }
+                $condition[$this->sortAttribute] = $owner->find()->andWhere($this->getCondition())->count() - 1;
+                $owner->updateAttributes($condition);
+            }
+        }
+        // calculate pos change
+        $currentPos = $owner->getAttribute($this->sortAttribute);
+        $destinationPos = $model->getAttribute($this->sortAttribute);
+        if ($position == 'after') {
+            $newPos = $destinationPos > $currentPos ? $destinationPos - 1 : $destinationPos;
+        } else {
+            $newPos = $destinationPos > $currentPos ? $destinationPos : $destinationPos + 1;
+        }
+        $this->moveToPosition($newPos);
+    }
+
+    /**
+     * Move current model after specified
+     * @param ActiveRecord $model
+     */
+    public function moveAfter($model)
+    {
+        $this->relativeMove($model, 'after');
+    }
+
+    /**
+     * Move current model before specified
+     * @param ActiveRecord $model
+     */
+    public function moveBefore($model)
+    {
+        $this->relativeMove($model, 'before');
     }
 }
